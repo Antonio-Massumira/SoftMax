@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { PlusIcon, MinusIcon, TrashIcon, CashIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, MinusIcon, TrashIcon, BanknotesIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
-import { supabase, Product } from '../lib/supabase'
+import { supabase, type Product } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
 interface CartItem {
@@ -306,7 +306,7 @@ const Cashier: React.FC = () => {
                 disabled={processing}
                 className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <CashIcon className="h-5 w-5 mr-2" />
+                <BanknotesIcon className="h-5 w-5 mr-2" />
                 {processing ? 'Processando...' : 'Finalizar Venda'}
               </button>
               <button

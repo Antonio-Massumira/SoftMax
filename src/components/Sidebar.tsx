@@ -5,7 +5,7 @@ import {
   ShoppingBagIcon,
   TruckIcon,
   ChartBarIcon,
-  CashIcon,
+  BanknotesIcon,
   CogIcon,
 } from '@heroicons/react/24/outline'
 
@@ -19,7 +19,7 @@ const navigation = [
   { name: 'Produtos', href: '/products', icon: ShoppingBagIcon },
   { name: 'Fornecedores', href: '/suppliers', icon: TruckIcon },
   { name: 'Relatórios', href: '/reports', icon: ChartBarIcon },
-  { name: 'Caixa', href: '/cashier', icon: CashIcon },
+  { name: 'Caixa', href: '/cashier', icon: BanknotesIcon },
   { name: 'Configurações', href: '/settings', icon: CogIcon },
 ]
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
-import { supabase, Product } from '../lib/supabase'
+import { supabase, type Product } from '../lib/supabase'
 
 const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
