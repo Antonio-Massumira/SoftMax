@@ -12,6 +12,7 @@ import Suppliers from './pages/Suppliers'
 import Cashier from './pages/Cashier'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import './index.css'
 
 const AppRoutes: React.FC = () => {
   const { user, loading } = useAuth()
