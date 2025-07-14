@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { PlusIcon, MinusIcon, TrashIcon, BanknotesIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, MinusIcon, TrashIcon, BanknotesIcon, PrinterIcon } from '@heroicons/react/24/outline'
 import toast from 'react-hot-toast'
 import { supabase, type Product } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -90,6 +90,186 @@ const Cashier: React.FC = () => {
     return cart.reduce((total, item) => total + (item.product.price * item.quantity), 0)
   }
 
+  // Função para gerar e imprimir recibo em PDF
+  const generateReceipt = () => {
+    if (cart.length === 0) {
+      toast.error('Carrinho está vazio')
+      return
+    }
+
+    const currentDate = new Date().toLocaleString('pt-BR', {
+      timeZone: 'Africa/Maputo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+
+    const paymentMethodText = {
+      cash: 'Dinheiro',
+      card: 'Cartão',
+      transfer: 'Transferência'
+    }
+
+    // Criar conteúdo HTML do recibo
+    const receiptContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Recibo de Venda - SoftMax</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              max-width: 400px;
+              margin: 0 auto;
+              padding: 20px;
+              font-size: 12px;
+              line-height: 1.4;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #333;
+              padding-bottom: 15px;
+              margin-bottom: 20px;
+            }
+            .company-name {
+              font-size: 20px;
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            .system-name {
+              font-size: 14px;
+              color: #666;
+              margin-bottom: 10px;
+            }
+            .date {
+              font-size: 11px;
+              color: #666;
+            }
+            .items {
+              margin: 20px 0;
+            }
+            .item {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+              padding-bottom: 5px;
+              border-bottom: 1px dotted #ccc;
+            }
+            .item-info {
+              flex: 1;
+            }
+            .item-name {
+              font-weight: bold;
+              margin-bottom: 2px;
+            }
+            .item-details {
+              font-size: 10px;
+              color: #666;
+            }
+            .item-total {
+              font-weight: bold;
+              text-align: right;
+              min-width: 80px;
+            }
+            .summary {
+              border-top: 2px solid #333;
+              padding-top: 15px;
+              margin-top: 20px;
+            }
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+            }
+            .total-row {
+              font-size: 16px;
+              font-weight: bold;
+              border-top: 1px solid #333;
+              padding-top: 8px;
+              margin-top: 8px;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 1px dotted #ccc;
+              font-size: 10px;
+              color: #666;
+            }
+            @media print {
+              body { margin: 0; padding: 10px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">SoftMax Sales</div>
+            <div class="system-name">Sistema de Gestão de Vendas</div>
+            <div class="date">Data: ${currentDate}</div>
+          </div>
+
+          <div class="items">
+            ${cart.map(item => `
+              <div class="item">
+                <div class="item-info">
+                  <div class="item-name">${item.product.name}</div>
+                  <div class="item-details">
+                    ${item.quantity}x MZN ${item.product.price.toFixed(2)}
+                  </div>
+                </div>
+                <div class="item-total">
+                  MZN ${(item.quantity * item.product.price).toFixed(2)}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="summary">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span>MZN ${getTotal().toFixed(2)}</span>
+            </div>
+            <div class="summary-row">
+              <span>Forma de Pagamento:</span>
+              <span>${paymentMethodText[paymentMethod]}</span>
+            </div>
+            <div class="summary-row total-row">
+              <span>TOTAL:</span>
+              <span>MZN ${getTotal().toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Operador: ${user?.user_metadata?.name || 'Antonio Massumira'}</p>
+            <p>Obrigado pela sua preferência!</p>
+            <p>SoftMax Sales Management System v1.0</p>
+          </div>
+        </body>
+      </html>
+    `
+
+    // Abrir nova janela e imprimir
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(receiptContent)
+      printWindow.document.close()
+      
+      // Aguardar carregamento e imprimir
+      printWindow.onload = () => {
+        printWindow.print()
+        printWindow.close()
+      }
+      
+      toast.success('Recibo gerado com sucesso!')
+    } else {
+      toast.error('Erro ao abrir janela de impressão')
+    }
+  }
+
   const processSale = async () => {
     if (cart.length === 0) {
       toast.error('Carrinho está vazio')
@@ -142,6 +322,9 @@ const Cashier: React.FC = () => {
 
         if (updateError) throw updateError
       }
+
+      // Gerar recibo antes de limpar o carrinho
+      generateReceipt()
 
       toast.success('Venda realizada com sucesso!')
       setCart([])
@@ -205,7 +388,7 @@ const Cashier: React.FC = () => {
                 {product.name}
               </h3>
               <p className="text-primary-600 font-semibold">
-                R$ {product.price.toFixed(2)}
+                MZN {product.price.toFixed(2)}
               </p>
               <p className="text-xs text-gray-500">
                 Estoque: {product.quantity}
@@ -294,7 +477,7 @@ const Cashier: React.FC = () => {
                   Total:
                 </span>
                 <span className="text-2xl font-bold text-primary-600">
-                  R$ {getTotal().toFixed(2)}
+                  MZN {getTotal().toFixed(2)}
                 </span>
               </div>
             </div>
@@ -309,6 +492,16 @@ const Cashier: React.FC = () => {
                 <BanknotesIcon className="h-5 w-5 mr-2" />
                 {processing ? 'Processando...' : 'Finalizar Venda'}
               </button>
+              
+              {/* Botão para Imprimir Recibo */}
+              <button
+                onClick={generateReceipt}
+                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <PrinterIcon className="h-4 w-4 mr-2" />
+                Imprimir Recibo
+              </button>
+              
               <button
                 onClick={() => setCart([])}
                 className="w-full px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"

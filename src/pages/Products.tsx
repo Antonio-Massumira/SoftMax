@@ -7,6 +7,7 @@ const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -39,11 +40,13 @@ const Products: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.name || formData.price <= 0) {
       toast.error('Nome e preço são obrigatórios')
       return
     }
+
+    setSubmitting(true)
 
     try {
       if (editingProduct) {
@@ -64,13 +67,15 @@ const Products: React.FC = () => {
       } else {
         const { error } = await supabase
           .from('products')
-          .insert([{
-            name: formData.name,
-            description: formData.description,
-            price: formData.price,
-            quantity: formData.quantity,
-            image_url: formData.image_url,
-          }])
+          .insert([
+            {
+              name: formData.name,
+              description: formData.description,
+              price: formData.price,
+              quantity: formData.quantity,
+              image_url: formData.image_url,
+            },
+          ])
 
         if (error) throw error
         toast.success('Produto criado com sucesso!')
@@ -82,6 +87,8 @@ const Products: React.FC = () => {
       fetchProducts()
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar produto')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -120,39 +127,43 @@ const Products: React.FC = () => {
     setIsModalOpen(true)
   }
 
+  const closeModal = () => {
+    if (submitting) return
+    setIsModalOpen(false)
+    setEditingProduct(null)
+    setFormData({ name: '', description: '', price: 0, quantity: 0, image_url: '' })
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Produtos</h1>
-          <p className="mt-2 text-gray-600">Gerencie seu estoque de produtos</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Produtos</h1>
+          <p className="mt-1 text-sm text-slate-500">Gerencie seu estoque de produtos</p>
         </div>
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="inline-flex items-center px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-lg transition-colors"
         >
-          <PlusIcon className="h-5 w-5 mr-2" />
+          <PlusIcon className="h-4 w-4 mr-2" />
           Novo Produto
         </button>
       </div>
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((product) => (
           <div
             key={product.id}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+            className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow"
           >
-            {/* Product Image */}
             <div className="aspect-w-1 aspect-h-1 w-full">
               {product.image_url ? (
                 <img
@@ -161,39 +172,38 @@ const Products: React.FC = () => {
                   className="w-full h-48 object-cover"
                 />
               ) : (
-                <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-                  <PhotoIcon className="h-12 w-12 text-gray-400" />
+                <div className="w-full h-48 bg-slate-50 flex items-center justify-center">
+                  <PhotoIcon className="h-12 w-12 text-slate-300" />
                 </div>
               )}
             </div>
 
-            {/* Product Info */}
             <div className="p-4">
-              <h3 className="text-lg font-medium text-gray-900 truncate">
+              <h3 className="text-base font-medium text-slate-900 truncate">
                 {product.name}
               </h3>
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+              <p className="text-sm text-slate-500 mt-1 line-clamp-2">
                 {product.description || 'Sem descrição'}
               </p>
               <div className="mt-4 flex justify-between items-center">
                 <div>
-                  <p className="text-lg font-semibold text-primary-600">
-                    R$ {product.price.toFixed(2)}
+                  <p className="text-lg font-semibold text-slate-900">
+                    MZN {product.price.toFixed(2)}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-slate-500">
                     Estoque: {product.quantity}
                   </p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-1">
                   <button
                     onClick={() => handleEdit(product)}
-                    className="p-2 text-gray-400 hover:text-gray-500"
+                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg"
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(product.id)}
-                    className="p-2 text-red-400 hover:text-red-500"
+                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -204,129 +214,127 @@ const Products: React.FC = () => {
         ))}
       </div>
 
-      {/* Empty State */}
       {products.length === 0 && (
-        <div className="text-center py-12">
-          <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
+        <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+          <PhotoIcon className="mx-auto h-12 w-12 text-slate-300" />
+          <h3 className="mt-4 text-base font-medium text-slate-900">
             Nenhum produto encontrado
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-slate-500">
             Comece criando um novo produto.
           </p>
           <div className="mt-6">
             <button
               onClick={openCreateModal}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+              className="inline-flex items-center px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-lg"
             >
-              <PlusIcon className="h-5 w-5 mr-2" />
+              <PlusIcon className="h-4 w-4 mr-2" />
               Novo Produto
             </button>
           </div>
         </div>
       )}
 
-      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4" onClick={closeModal}>
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-lg w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form onSubmit={handleSubmit}>
+              <div className="px-6 pt-6 pb-4">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                  {editingProduct ? 'Editar Produto' : 'Novo Produto'}
+                </h3>
 
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <form onSubmit={handleSubmit}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
-                    {editingProduct ? 'Editar Produto' : 'Novo Produto'}
-                  </h3>
-                  
-                  <div className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome *</label>
+                    <input
+                      type="text"
+                      required
+                      disabled={submitting}
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg"
+                      placeholder="Nome do produto"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Descrição</label>
+                    <textarea
+                      rows={3}
+                      disabled={submitting}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg resize-none"
+                      placeholder="Descrição do produto"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Nome *
-                      </label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Preço *</label>
                       <input
-                        type="text"
+                        type="number"
+                        step="0.01"
+                        min="0"
                         required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        disabled={submitting}
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg"
+                        placeholder="0.00"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Descrição
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Preço *
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          required
-                          value={formData.price}
-                          onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Quantidade
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={formData.quantity}
-                          onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        URL da Imagem
-                      </label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Quantidade</label>
                       <input
-                        type="url"
-                        value={formData.image_url}
-                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                        placeholder="https://exemplo.com/imagem.jpg"
+                        type="number"
+                        min="0"
+                        disabled={submitting}
+                        value={formData.quantity}
+                        onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg"
+                        placeholder="0"
                       />
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    {editingProduct ? 'Atualizar' : 'Criar'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Cancelar
-                  </button>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">URL da Imagem</label>
+                    <input
+                      type="url"
+                      disabled={submitting}
+                      value={formData.image_url}
+                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg"
+                      placeholder="https://exemplo.com/imagem.jpg"
+                    />
+                  </div>
                 </div>
-              </form>
-            </div>
+              </div>
+
+              <div className="bg-slate-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={submitting}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 text-white rounded-lg disabled:bg-slate-400"
+                >
+                  {submitting ? (editingProduct ? 'Atualizando...' : 'Criando...') : (editingProduct ? 'Atualizar' : 'Criar')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
